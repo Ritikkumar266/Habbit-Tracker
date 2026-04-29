@@ -10,9 +10,24 @@ function Settings({ setIsAuthenticated }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('profile');
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState(true);
+  const [emailDigest, setEmailDigest] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   useEffect(() => {
     fetchUser();
+    // Load dark mode preference from localStorage
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.body.classList.add('dark-mode');
+    }
   }, []);
 
   const fetchUser = async () => {
@@ -26,11 +41,81 @@ function Settings({ setIsAuthenticated }) {
     }
   };
 
+  const handleDarkModeToggle = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+    
+    if (newDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Validation
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setError('Please fill in all password fields');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setError('New password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      console.log('Attempting to change password...');
+      
+      // First test if we can get current user (to verify auth is working)
+      try {
+        const userTest = await authAPI.getCurrentUser();
+        console.log('Auth test successful:', userTest.data);
+      } catch (authError) {
+        console.error('Auth test failed:', authError);
+        setError('Authentication failed. Please log in again.');
+        return;
+      }
+      
+      const response = await authAPI.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+      console.log('Password change response:', response);
+      setSuccess('Password changed successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswordForm(false);
+    } catch (err) {
+      console.error('Password change error:', err);
+      console.error('Error response:', err.response);
+      
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status === 400) {
+        setError(err.response.data.message || 'Invalid request');
+      } else if (err.response?.status === 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        setError('Cannot connect to server. Please check if the backend is running.');
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to change password';
+        setError(errorMessage);
+      }
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
-    navigate('/login');
+    navigate('/');
   };
 
   const handleDeleteAccount = () => {
@@ -72,12 +157,6 @@ function Settings({ setIsAuthenticated }) {
           >
             🔒 Security
           </button>
-          <button
-            className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
-            onClick={() => setActiveTab('about')}
-          >
-            ℹ️ About
-          </button>
         </div>
 
         <div className="settings-panel">
@@ -110,21 +189,36 @@ function Settings({ setIsAuthenticated }) {
                     <h3>Dark Mode</h3>
                     <p>Enable dark theme for the app</p>
                   </div>
-                  <input type="checkbox" className="toggle" />
+                  <input 
+                    type="checkbox" 
+                    className="toggle" 
+                    checked={darkMode}
+                    onChange={handleDarkModeToggle}
+                  />
                 </div>
                 <div className="preference-item">
                   <div className="preference-info">
                     <h3>Notifications</h3>
                     <p>Receive daily reminders</p>
                   </div>
-                  <input type="checkbox" className="toggle" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    className="toggle" 
+                    checked={notifications}
+                    onChange={(e) => setNotifications(e.target.checked)}
+                  />
                 </div>
                 <div className="preference-item">
                   <div className="preference-info">
                     <h3>Email Digest</h3>
                     <p>Weekly summary of your habits</p>
                   </div>
-                  <input type="checkbox" className="toggle" />
+                  <input 
+                    type="checkbox" 
+                    className="toggle" 
+                    checked={emailDigest}
+                    onChange={(e) => setEmailDigest(e.target.checked)}
+                  />
                 </div>
               </div>
             </div>
@@ -135,50 +229,78 @@ function Settings({ setIsAuthenticated }) {
               <h2>Security</h2>
               <div className="security-section">
                 <div className="security-item">
-                  <h3>Password</h3>
-                  <p>Change your password regularly to keep your account secure</p>
-                  <button className="action-btn">Change Password</button>
-                </div>
-                <div className="security-item">
-                  <h3>Two-Factor Authentication</h3>
-                  <p>Add an extra layer of security to your account</p>
-                  <button className="action-btn">Enable 2FA</button>
-                </div>
-                <div className="security-item">
-                  <h3>Active Sessions</h3>
-                  <p>Manage your active sessions across devices</p>
-                  <button className="action-btn">View Sessions</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'about' && (
-            <div className="tab-content">
-              <h2>About Habit Tracker</h2>
-              <div className="about-section">
-                <div className="about-item">
-                  <h3>Version</h3>
-                  <p>1.0.0</p>
-                </div>
-                <div className="about-item">
-                  <h3>Built With</h3>
-                  <p>React, Node.js, Express, MongoDB</p>
-                </div>
-                <div className="about-item">
-                  <h3>Features</h3>
-                  <ul>
-                    <li>✅ Daily habit tracking</li>
-                    <li>✅ Streak system</li>
-                    <li>✅ Calendar view</li>
-                    <li>✅ Statistics & analytics</li>
-                    <li>✅ Leaderboard</li>
-                    <li>✅ History tracking</li>
-                  </ul>
-                </div>
-                <div className="about-item">
-                  <h3>Support</h3>
-                  <p>For issues or feedback, please contact support@habittracker.com</p>
+                  <h3>Change Password</h3>
+                  <p>Update your password to keep your account secure</p>
+                  
+                  {!showPasswordForm ? (
+                    <button 
+                      className="action-btn"
+                      onClick={() => setShowPasswordForm(true)}
+                    >
+                      Change Password
+                    </button>
+                  ) : (
+                    <form onSubmit={handlePasswordChange} className="password-form">
+                      <div className="form-group">
+                        <label>Current Password</label>
+                        <input
+                          type="password"
+                          value={passwordForm.currentPassword}
+                          onChange={(e) => setPasswordForm({
+                            ...passwordForm,
+                            currentPassword: e.target.value
+                          })}
+                          placeholder="Enter current password"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>New Password</label>
+                        <input
+                          type="password"
+                          value={passwordForm.newPassword}
+                          onChange={(e) => setPasswordForm({
+                            ...passwordForm,
+                            newPassword: e.target.value
+                          })}
+                          placeholder="Enter new password"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Confirm New Password</label>
+                        <input
+                          type="password"
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) => setPasswordForm({
+                            ...passwordForm,
+                            confirmPassword: e.target.value
+                          })}
+                          placeholder="Confirm new password"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-actions">
+                        <button type="submit" className="action-btn">
+                          Update Password
+                        </button>
+                        <button 
+                          type="button" 
+                          className="cancel-btn"
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                            setError('');
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </div>
             </div>

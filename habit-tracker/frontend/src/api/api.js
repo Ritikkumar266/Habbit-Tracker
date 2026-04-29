@@ -25,7 +25,9 @@ export const authAPI = {
   login: (email, password) =>
     api.post('/auth/login', { email, password }),
   getCurrentUser: () =>
-    api.get('/auth/me')
+    api.get('/auth/me'),
+  changePassword: (currentPassword, newPassword) =>
+    api.put('/auth/change-password', { currentPassword, newPassword })
 };
 
 // Habit endpoints
@@ -40,8 +42,8 @@ export const habitAPI = {
     api.put(`/habits/${id}`, { title, description }),
   deleteHabit: (id) =>
     api.delete(`/habits/${id}`),
-  checkHabit: (id) =>
-    api.post(`/habits/${id}/check`),
+  checkHabit: (id, date) =>
+    api.post(`/habits/${id}/check`, { date }),
   getStats: (id) =>
     api.get(`/habits/${id}/stats`)
 };

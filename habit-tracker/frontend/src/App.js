@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -21,6 +22,13 @@ function App() {
     if (token) {
       setIsAuthenticated(true);
     }
+    
+    // Initialize dark mode from localStorage
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    if (savedDarkMode) {
+      document.body.classList.add('dark-mode');
+    }
+    
     setLoading(false);
   }, []);
 
@@ -32,6 +40,16 @@ function App() {
     <Router>
       {isAuthenticated && <Navbar setIsAuthenticated={setIsAuthenticated} />}
       <Routes>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <LandingPage />
+            )
+          }
+        />
         <Route
           path="/login"
           element={
@@ -58,7 +76,7 @@ function App() {
             isAuthenticated ? (
               <Dashboard />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -68,7 +86,7 @@ function App() {
             isAuthenticated ? (
               <AddHabit />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -78,7 +96,7 @@ function App() {
             isAuthenticated ? (
               <HabitDetails />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -88,7 +106,7 @@ function App() {
             isAuthenticated ? (
               <Statistics />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -98,7 +116,7 @@ function App() {
             isAuthenticated ? (
               <History />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -108,7 +126,7 @@ function App() {
             isAuthenticated ? (
               <Leaderboard />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
@@ -118,11 +136,10 @@ function App() {
             isAuthenticated ? (
               <Settings setIsAuthenticated={setIsAuthenticated} />
             ) : (
-              <Navigate to="/login" />
+              <Navigate to="/" />
             )
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );

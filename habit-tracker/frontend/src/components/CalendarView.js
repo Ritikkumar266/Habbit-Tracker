@@ -21,24 +21,21 @@ function CalendarView({ habits, onUpdate, onDelete }) {
   const handleDateClick = async (habit, day) => {
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     
-    // Get today's date in local timezone
+    // Only allow checking in for today
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-    console.log('Clicked day:', day);
-    console.log('Date string:', dateStr);
-    console.log('Today string:', todayStr);
-    console.log('Current date object:', currentDate);
-    console.log('Today date object:', today);
-
+    
     if (dateStr !== todayStr) {
       setError('You can only check in for today');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
+    console.log('Clicked day:', day);
+    console.log('Date string:', dateStr);
+
     try {
-      const response = await habitAPI.checkHabit(habit._id);
+      const response = await habitAPI.checkHabit(habit._id, dateStr);
       console.log('Updated habit:', response.data.habit);
       onUpdate(response.data.habit);
       setError('');
