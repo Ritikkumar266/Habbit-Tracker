@@ -1,0 +1,41 @@
+{
+  "name": "habit-tracker-fullstack",
+  "version": "1.0.0",
+  "description": "Full-stack habit tracker application with React frontend and Node.js backend",
+  "main": "index.js",
+  "scripts": {
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "build": "npm run install-all && cd frontend && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"cd backend && npm start\" \"cd frontend && npm start\"",
+    "dev-backend": "cd backend && npm run dev",
+    "dev-frontend": "cd frontend && npm start",
+    "heroku-postbuild": "npm run build"
+  },
+  "keywords": [
+    "habit-tracker",
+    "react",
+    "nodejs",
+    "mongodb",
+    "express",
+    "mern-stack",
+    "productivity",
+    "habits",
+    "streaks"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/habit-tracker"
+  }
+}

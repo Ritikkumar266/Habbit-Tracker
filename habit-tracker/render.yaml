@@ -1,0 +1,36 @@
+services:
+  # Backend API Service
+  - type: web
+    name: habit-tracker-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false  # You'll set this manually with your MongoDB Atlas URL
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: habit-tracker-frontend
+          property: url
+
+  # Frontend Static Site
+  - type: web
+    name: habit-tracker-frontend
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    rootDir: frontend
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: habit-tracker-backend
+          property: url
